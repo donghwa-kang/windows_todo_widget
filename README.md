@@ -1,4 +1,4 @@
-# windows_todo_widget
+# windows_todo_widget for KWU
 
 Windows 11 바탕화면에서 할 일과 프로젝트 진행률을 관리하는 검정 터미널 스타일 위젯입니다. **C# · WPF · .NET 8**로 구현했습니다.
 
