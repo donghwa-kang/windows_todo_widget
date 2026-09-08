@@ -48,7 +48,7 @@ public sealed class WidgetWindow : Window
     {
         // Implicit Window styles do not automatically match a derived Window type.
         Style = (Style)Application.Current.FindResource(typeof(Window));
-        Title = "터미널 작업 위젯"; WindowStyle = WindowStyle.None; ResizeMode = ResizeMode.NoResize; ShowInTaskbar = recoveryMode;
+        Title = "Windows Todo Widget"; WindowStyle = WindowStyle.None; ResizeMode = ResizeMode.NoResize; ShowInTaskbar = recoveryMode;
         repository = new WorkspaceRepository(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TerminalWidget"));
         state = repository.Load(); var s = state.Settings;
         notion=new NotionSync();
@@ -100,7 +100,8 @@ public sealed class WidgetWindow : Window
         klasArea.Children.Add(kh);klasArea.Children.Add(klasItems);flow.Children.Add(klasArea);
         body.RowDefinitions[1].Height=new GridLength(0);
         body.Children.Add(new ScrollViewer {Content=flow,VerticalScrollBarVisibility=ScrollBarVisibility.Auto,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled});
-        tray = new Forms.NotifyIcon { Icon = System.Drawing.SystemIcons.Application, Text = "터미널 작업 위젯", Visible = true, ContextMenuStrip = new Forms.ContextMenuStrip() };
+        Icon=System.Windows.Media.Imaging.BitmapFrame.Create(new Uri("pack://application:,,,/Assets/app.ico"));
+        tray = new Forms.NotifyIcon { Icon = System.Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath!) ?? System.Drawing.SystemIcons.Application, Text = "Windows Todo Widget", Visible = true, ContextMenuStrip = new Forms.ContextMenuStrip() };
         tray.ContextMenuStrip.Items.Add("위젯 표시", null, (_,_) => Dispatcher.Invoke(ShowWidget)); tray.ContextMenuStrip.Items.Add("숨기기", null, (_,_) => Dispatcher.Invoke(Hide)); tray.ContextMenuStrip.Items.Add("종료", null, (_,_) => Dispatcher.Invoke(Quit)); tray.DoubleClick += (_,_) => Dispatcher.Invoke(ShowWidget);
         geometryTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(600) }; geometryTimer.Tick += (_,_) => { geometryTimer.Stop(); SaveGeometry(); };
         SizeChanged += (_,_) => { if(ready) { geometryTimer.Stop(); geometryTimer.Start(); } };

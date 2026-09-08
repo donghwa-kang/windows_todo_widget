@@ -30,7 +30,7 @@ public sealed class KlasWindow : Window
     {
         this.save = save;
         Style = (Style)Application.Current.FindResource(typeof(Window));
-        Title = "KLAS 연결 · 터미널 위젯"; Width = 1050; Height = 760; MinWidth = 650; MinHeight = 450;
+        Title = "KLAS 연결 · Windows Todo Widget"; Width = 1050; Height = 760; MinWidth = 650; MinHeight = 450;
         WindowStartupLocation = WindowStartupLocation.CenterScreen; ShowActivated = false;
         var root = new DockPanel(); Content = root;
         var bar = new StackPanel { Margin = new Thickness(10) }; DockPanel.SetDock(bar, Dock.Top); root.Children.Add(bar);

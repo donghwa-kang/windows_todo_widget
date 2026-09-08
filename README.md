@@ -1,6 +1,6 @@
 # windows_todo_widget for KWU
 
-Windows 11 바탕화면에서 할 일과 프로젝트 진행률을 관리하는 검정 터미널 스타일 위젯입니다. **C# · WPF · .NET 8**로 구현했습니다.
+Windows 11 바탕화면에서 할 일과 프로젝트 진행률을 관리하는 할 일·프로젝트 관리 위젯입니다. **C# · WPF · .NET 8**로 구현했습니다.
 
 ## 실행 화면
 
@@ -26,7 +26,24 @@ Windows 11 바탕화면에서 할 일과 프로젝트 진행률을 관리하는 
 
 첫 실행은 빈 상태이며, 로컬 할 일과 프로젝트는 계정이나 API 키 없이 사용할 수 있습니다. Notion과 KLAS는 각 사용자가 직접 연결합니다.
 
-## 실행 및 빌드
+## 설치해서 사용하기
+
+1. [최신 릴리스](https://github.com/donghwa-kang/windows_todo_widget/releases/latest)에서 `windows_todo_widget-setup-1.0.0-win-x64.exe`를 다운로드합니다. `Source code` ZIP은 개발용 소스입니다.
+2. 설치 파일을 실행합니다. 기본 설치 위치는 현재 사용자의 `%LOCALAPPDATA%\Programs\WindowsTodoWidget`이며 관리자 권한은 필요하지 않습니다.
+3. 설치가 끝나면 바탕화면 또는 시작 메뉴의 **Windows Todo Widget** 바로가기로 실행합니다. .NET 런타임은 설치 파일에 포함되어 있습니다.
+
+- **켜기:** 바탕화면·시작 메뉴 바로가기 더블클릭
+- **숨기기:** 위젯 상단 `—`
+- **다시 표시:** 트레이의 표시 메뉴 또는 바로가기 더블클릭
+- **완전히 끄기:** 트레이 메뉴의 종료
+- **자동 시작:** 위젯 설정에서 켜기·끄기
+- **제거:** Windows 설정 → 앱 → 설치된 앱 → Windows Todo Widget → 제거
+
+업데이트·제거 전에는 트레이에서 위젯을 종료하세요. 제거할 때 할 일·프로젝트·로그인 캐시와 자격 증명은 보존합니다. 완전한 개인 데이터 삭제가 필요한 경우 아래 저장 위치도 별도로 관리해야 합니다. 설치 파일에는 개인 데이터가 들어 있지 않습니다.
+
+설치 파일은 아직 코드 서명되지 않았습니다. 배포 파일의 SHA-256 값은 같은 릴리스의 `SHA256SUMS.txt`에 제공합니다. KLAS 연결에는 별도의 Microsoft Edge WebView2 Runtime이 필요합니다.
+
+## 소스에서 실행 및 빌드
 
 Windows 11 x64와 [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)가 필요합니다. KLAS 연결에는 [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)이 필요합니다. 최초 빌드에서는 NuGet 패키지를 다운로드합니다.
 
@@ -43,7 +60,7 @@ dotnet publish TerminalWidget.csproj -c Release -r win-x64 --self-contained fals
 .\publish\TerminalWidget.exe
 ```
 
-배포 시 `publish` 폴더 전체를 전달하세요. 수신 PC에는 .NET 8 **Desktop Runtime**이 필요합니다. .NET 런타임을 포함하려면 `--self-contained true`로 빌드하세요. WebView2 Runtime은 별도입니다. 서명된 설치 프로그램은 제공하지 않습니다.
+배포 시 `publish` 폴더 전체를 전달하세요. 수신 PC에는 .NET 8 **Desktop Runtime**이 필요합니다. .NET 런타임을 포함하려면 `--self-contained true`로 빌드하세요. WebView2 Runtime은 별도입니다. 설치 파일 배포는 위의 최신 릴리스에서 받을 수 있습니다.
 
 창이 보이지 않으면 `TerminalWidget.exe --window`로 실행하여 일반 창 복구 모드를 사용하세요. 이미 실행 중이면 기존 창을 다시 표시합니다.
 
@@ -139,3 +156,13 @@ JS 테스트는 Node.js 22 이상이 필요합니다. 자동 테스트는 진행
 `Core/`: 데이터·검증·계산·저장. `Platform/`: Windows 통합·Notion HTTP·KLAS 조회. `WidgetWindow.cs`: 위젯 화면. `Dialogs.cs`, `*Theme.xaml`: 입력창과 공통 디자인. `Tests/`: 외부 계정 없이 실행하는 테스트.
 
 바탕화면 부착은 Explorer의 창 구조를 이용하며 Windows의 공식 위젯 API가 아닙니다. 실패하면 일반 창으로 전환합니다. Explorer 재시작, Windows 업데이트, 다중 모니터·DPI에 따라 차이가 있을 수 있습니다. 창 연결 점검 타이머는 외부 서비스 조회와 별개입니다.
+
+## 설치 파일 재빌드
+
+Windows에서 Inno Setup 6과 .NET 8 SDK, Node.js 22 이상을 설치한 뒤 새로운 소스 체크아웃에서 다음 명령을 실행합니다. 설치 파일과 해시는 artifacts/release에 생성됩니다.
+
+```powershell
+.\scripts\Build-Release.ps1
+```
+
+아이콘 원본은 Assets/app.svg이며 scripts/New-AppIcon.ps1로 여러 해상도의 ICO를 생성할 수 있습니다.
