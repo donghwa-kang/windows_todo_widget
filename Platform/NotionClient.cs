@@ -16,14 +16,50 @@ public sealed class NotionHttpException : Exception
 public sealed class NotionClient : IDisposable
 {
     private readonly HttpClient http;
-    private readonly string sourceId;
-    public NotionClient(string token,string sourceId,HttpMessageHandler? handler=null)
+    private readonly string sourceId="";
+    public NotionClient(string token,string sourceId,HttpMessageHandler? handler=null):this(token,handler)
     {
-        if(!Guid.TryParse(sourceId,out var source)||source==Guid.Empty)throw new ArgumentException("올바른 노션 데이터 소스 ID를 입력하세요.",nameof(sourceId));
+        if(!Guid.TryParse(sourceId,out var source)||source==Guid.Empty){http.Dispose();throw new ArgumentException("올바른 노션 데이터 소스 ID를 입력하세요.",nameof(sourceId));}
         this.sourceId=source.ToString();
+    }
+    private NotionClient(string token,HttpMessageHandler? handler)
+    {
         http=handler==null?new HttpClient(new HttpClientHandler {AllowAutoRedirect=false}):new HttpClient(handler);
         http.BaseAddress=new Uri("https://api.notion.com/v1/");http.Timeout=TimeSpan.FromSeconds(15);
         http.DefaultRequestHeaders.Authorization=new AuthenticationHeaderValue("Bearer",token);http.DefaultRequestHeaders.Add("Notion-Version","2025-09-03");
+    }
+    public static Guid ParseParentPage(string input)
+    {
+        input=input.Trim();
+        if(Guid.TryParse(input,out var id)&&id!=Guid.Empty)return id;
+        if(!Uri.TryCreate(input,UriKind.Absolute,out var uri)||uri.Scheme!="https"||
+           !(uri.Host=="notion.so"||uri.Host.EndsWith(".notion.so",StringComparison.OrdinalIgnoreCase)||uri.Host=="notion.com"||uri.Host.EndsWith(".notion.com",StringComparison.OrdinalIgnoreCase)))
+            throw new ArgumentException("노션 부모 페이지 링크 또는 페이지 ID를 입력하세요.");
+        var match=System.Text.RegularExpressions.Regex.Match(uri.AbsolutePath.TrimEnd('/'),@"([0-9a-fA-F]{32}|[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12})$");
+        if(!Guid.TryParse(match.Value,out id)||id==Guid.Empty)throw new ArgumentException("부모 페이지 링크에서 페이지 ID를 확인할 수 없습니다.");
+        return id;
+    }
+    public static async Task<string> CreateTaskDatabase(string token,Guid parentPageId,HttpMessageHandler? handler=null)
+    {
+        if(parentPageId==Guid.Empty)throw new ArgumentException("부모 페이지를 선택하세요.");
+        using var api=new NotionClient(token,handler);
+        var properties=new Dictionary<string,object>
+        {
+            ["이름"]=new {title=new {}},["완료"]=new {checkbox=new {}},["일정"]=new {date=new {}},
+            ["우선순위"]=new {select=new {options=new[]{new {name="1 · 높음",color="red"},new {name="2 · 보통",color="yellow"},new {name="3 · 여유",color="gray"}}}},
+            ["유형"]=new {select=new {options=new[]{new {name="할 일",color="green"}}}}
+        };
+        // 생성 요청은 재시도하지 않는다. 응답 유실 시 호출자가 생성 대기 기록을 유지한다.
+        using var doc=await api.Request(HttpMethod.Post,"databases",new
+        {
+            parent=new {type="page_id",page_id=parentPageId.ToString()},
+            title=new[]{new {type="text",text=new {content="할 일 & 일정"}}},
+            initial_data_source=new {properties},is_inline=false
+        });
+        var sources=doc.RootElement.GetProperty("data_sources");
+        if(sources.GetArrayLength()!=1||!Guid.TryParse(sources[0].GetProperty("id").GetString(),out var id)||id==Guid.Empty)
+            throw new InvalidOperationException("생성 응답을 확인할 수 없습니다. 노션 부모 페이지에서 생성 여부를 확인하세요.");
+        return id.ToString();
     }
     private async Task<JsonDocument> Request(HttpMethod method,string path,object? body=null)
     {

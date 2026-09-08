@@ -8,7 +8,8 @@ public sealed record NotionTask(Guid Id,NotionFields Fields,DateTimeOffset? Know
 {
     public TaskItem AsTask()=>new(Id,Fields.Title,null,Fields.Priority,Fields.Due,Fields.Done?(KnownCompletedAt??DateTimeOffset.MinValue):null);
 }
-public sealed record NotionCache(bool Enabled,List<NotionTask> Tasks,DateTimeOffset? LastSync=null,NotionFields? PendingCreate=null,string? SourceId=null);
+public sealed record NotionDatabaseSetup(Guid ParentPageId,string? SourceId=null);
+public sealed record NotionCache(bool Enabled,List<NotionTask> Tasks,DateTimeOffset? LastSync=null,NotionFields? PendingCreate=null,string? SourceId=null,NotionDatabaseSetup? DatabaseSetup=null);
 public static class NotionMapping
 {
     public static NotionFields FromTask(TaskItem t)=>new(t.Title,t.CompletedAt!=null,t.Priority,t.Due);

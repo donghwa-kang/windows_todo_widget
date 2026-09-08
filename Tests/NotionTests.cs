@@ -11,6 +11,29 @@ public static class NotionTests
     public static async Task Run(Action<bool,string> check)
     {
         const string sourceId="11111111-1111-4111-8111-111111111111"; var id=Guid.NewGuid();
+        check(NotionClient.ParseParentPage("https://www.notion.so/My-page-11111111111141118111111111111111?v=22222222222242228222222222222222").ToString()==sourceId,"부모 페이지 URL은 보기 ID 대신 경로 ID 사용");
+        check(NotionClient.ParseParentPage(sourceId).ToString()==sourceId,"부모 페이지 UUID 입력");
+        foreach(var badLink in new[]{"https://evil.example/11111111111141118111111111111111","https://www.notion.so/?v=11111111111141118111111111111111",Guid.Empty.ToString()})
+        {bool invalid=false;try{NotionClient.ParseParentPage(badLink);}catch(ArgumentException){invalid=true;}check(invalid,"잘못된 부모 페이지 입력 차단");}
+        int createRequests=0;
+        string createdSource=await NotionClient.CreateTaskDatabase("fake",id,new Fake(async req=>
+        {
+            createRequests++;
+            check(req.Method==HttpMethod.Post&&req.RequestUri!.AbsoluteUri=="https://api.notion.com/v1/databases","데이터베이스 생성은 공식 API에 단일 POST");
+            using var body=JsonDocument.Parse(await req.Content!.ReadAsStringAsync());var root=body.RootElement;
+            check(root.GetProperty("parent").GetProperty("page_id").GetGuid()==id,"지정한 부모 페이지 아래에만 생성");
+            var props=root.GetProperty("initial_data_source").GetProperty("properties");
+            check(props.EnumerateObject().Count()==5&&props.GetProperty("이름").TryGetProperty("title",out _)&&props.GetProperty("완료").TryGetProperty("checkbox",out _)&&props.GetProperty("일정").TryGetProperty("date",out _),"필수 속성 다섯 개와 종류 생성");
+            check(props.GetProperty("우선순위").GetProperty("select").GetProperty("options").GetArrayLength()==3&&props.GetProperty("유형").GetProperty("select").GetProperty("options")[0].GetProperty("name").GetString()=="할 일","우선순위 및 유형 선택값 생성");
+            return Json(new {data_sources=new[]{new {id=sourceId}}});
+        }));
+        check(createdSource==sourceId&&createRequests==1,"생성된 소스 ID 반환 및 추가 생성 없음");
+        foreach(var status in new[]{HttpStatusCode.Forbidden,HttpStatusCode.TooManyRequests,HttpStatusCode.InternalServerError})
+        {int attempts=0;bool failed=false;try{await NotionClient.CreateTaskDatabase("fake",id,new Fake(req=>{attempts++;return Task.FromResult(new HttpResponseMessage(status));}));}catch(NotionHttpException){failed=true;}check(failed&&attempts==1,"생성 오류·요청 제한 자동 재시도 금지");}
+        var setupCache=new NotionCache(false,new(),DatabaseSetup:new(id,sourceId));
+        check(JsonSerializer.Deserialize<NotionCache>(JsonSerializer.Serialize(setupCache))?.DatabaseSetup==setupCache.DatabaseSetup,"생성 후 연결 대기 기록 저장 복원");
+        var unknownSetup=setupCache with {DatabaseSetup=new(id)};
+        check(JsonSerializer.Deserialize<NotionCache>(JsonSerializer.Serialize(unknownSetup))?.DatabaseSetup?.ParentPageId==id,"응답 유실 생성 대기 기록 보존");
         foreach(var invalid in new[]{"",Guid.Empty.ToString(),"https://example.com/data"})
         {bool rejected=false;try{using var invalidApi=new NotionClient("fake",invalid);}catch(ArgumentException){rejected=true;}check(rejected,"잘못된 데이터 소스 ID 차단");}
         var cache=new NotionCache(true,new(),SourceId:sourceId);
