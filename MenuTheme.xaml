@@ -1,0 +1,39 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- 편집 메뉴의 기본 흰색 아이콘 열과 불필요한 여백을 제거한다. -->
+    <Style TargetType="ContextMenu">
+        <Setter Property="Foreground" Value="#CCD5DA"/>
+        <Setter Property="Background" Value="#101416"/>
+        <Setter Property="BorderBrush" Value="#343D42"/>
+        <Setter Property="FontFamily" Value="Segoe UI, Malgun Gothic"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="MinWidth" Value="140"/>
+        <Setter Property="HasDropShadow" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="5" Padding="4">
+                        <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style TargetType="MenuItem">
+        <Setter Property="Foreground" Value="#CCD5DA"/>
+        <Setter Property="Padding" Value="10,7"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Border x:Name="Row" Background="Transparent" CornerRadius="3" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter ContentSource="Header" RecognizesAccessKey="True"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True"><Setter TargetName="Row" Property="Background" Value="#24312B"/><Setter Property="Foreground" Value="#E1EEE6"/></Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Row" Property="Background" Value="#24312B"/></Trigger>
+                        <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4"/></Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

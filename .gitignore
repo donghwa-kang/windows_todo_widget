@@ -1,0 +1,25 @@
+**/bin/
+**/obj/
+/publish*/
+/artifacts/
+.vs/
+.idea/
+*.user
+*.suo
+*.lnk
+*.log
+*.tmp
+*.bak
+*.corrupt-*
+.env
+.env.*
+*.pfx
+*.pem
+*.key
+workspace*.json
+notion-cache*.json
+klas-cache*.json
+**/klas-browser/
+**/EBWebView/
+**/User Data/
+node_modules/

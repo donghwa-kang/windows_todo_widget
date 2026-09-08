@@ -1,0 +1,24 @@
+﻿name: Windows build
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Core tests
+        run: dotnet run --project Tests/CoreTests.csproj -c Release
+      - name: KLAS reader tests
+        run: node Tests/klas-reader.test.cjs
+      - name: Publish Windows x64
+        run: dotnet publish TerminalWidget.csproj -c Release -r win-x64 --self-contained false -o artifacts/app
